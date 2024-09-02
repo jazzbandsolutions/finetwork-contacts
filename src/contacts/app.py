@@ -17,10 +17,8 @@ def lambda_handler(event, context):
     headers = {"Content-Type": "application/json"}
     try:
         if event['routeKey'] == "DELETE /contacts/{pk}":
-            table.delete_item(
-                Key={'Pk': event['pathParameters']['pk'],
-                     'Sk': 'Client'})
-            body = 'Deleted Client ' + event['pathParameters']['pk']
+            pk= event['pathParameters']['pk']
+            body = delete_contact(pk)
         elif event['routeKey'] == "POST /contacts/lead/create":
             requestJSON = json.loads(event['body'])
             body = post_contacts(requestJSON)
@@ -33,11 +31,15 @@ def lambda_handler(event, context):
         elif event['routeKey'] == "GET /contacts/phone/{MSISDN}":
             value= event['pathParameters']['MSISDN']
             body = get_contact_by_phone(value)
-        elif event['routeKey'] == "GET /contacts?email={email}":
-            value= event['pathParameters']['email']
-            body = get_contact_by_phone(value)          
         elif event['routeKey'] == "GET /contacts":
-           body = get_contacts()
+            if 'pathParameters' in event and event['pathParameters'] is not None:
+              email= event['pathParameters']['email']
+              if email is not None:
+                body = get_contact_by_email(email)
+              else:
+                body = get_contacts()
+            else:
+                body = get_contacts() 
         elif event['routeKey'] == "PUT /contacts":
             requestJSON = json.loads(event['body'])
             table.put_item(
@@ -52,7 +54,7 @@ def lambda_handler(event, context):
                 })
             body = 'Put item ' + requestJSON['pk']
     except KeyError:
-        statusCode = 500
+        statusCode = 400
         body = 'Unsupported route: ' + event['routeKey']
     body = json.dumps(body)
     res = {
@@ -150,3 +152,12 @@ def post_contacts(requestJSON):
         return  'created contact'
     except KeyError:
         return 'error in get contacts'
+    
+def delete_contact(pk):
+    try:    
+        table.delete_item(
+            Key={'Pk': pk,
+                 'Sk': 'Client'})
+        return  'Deleted Client ' + pk
+    except KeyError:
+        return 'error in delete contacts'
