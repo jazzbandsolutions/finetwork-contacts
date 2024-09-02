@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  finetwork-contacts
+
+  Sample SAM Template for finetwork-contacts
+
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  ContactsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/contacts
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !ref ContactsDynamoTable  
+      Events:
+        GetAllContacts:
+          Type: HttpApi
+          Properties:
+            Path: /contacts
+            Method: GET
+        GetAnContact:
+          Type: HttpApi
+          Properties:
+            Path: /contacts/{pk}
+            Method: GET
+        GetContactByNIF:
+          Type: HttpApi
+          Properties:
+            Path: /contacts/identificationdocument/{NIF}
+            Method: GET 
+        GetContactByPhone:
+          Type: HttpApi
+          Properties:
+            Path: /contacts/phone/{MSISDN}
+            Method: GET 
+        DeleteAnContact:
+          Type: HttpApi
+          Properties:
+            Path: /contacts/{pk}
+            Method: DELETE
+        UpdateContact:
+          Type: HttpApi
+          Properties:
+            Path: /contacts
+            Method: PUT
+        CreateContact:
+          Type: HttpApi
+          Properties:
+            Path: /contacts/lead/create
+            Method: POST   
+  ContactsDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Test_lambda_vero
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+Outputs:
+  ApiEndpoint:
+    Description: "The invoke URL for our HTTP API"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/contacts"
+  Function:
+    Description: "DynamoDB handler function ARN"
+    Value: !GetAtt DDBHandlerFunction.Arn
