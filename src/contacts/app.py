@@ -4,8 +4,8 @@ import uuid
 from boto3.dynamodb.conditions import Key
 # import requests
 
-dynamodb = boto3.resource("dynamodb")
-dynamodb_client = boto3.client("dynamodb")
+dynamodb = boto3.resource('dynamodb')
+dynamodb_client = boto3.client('dynamodb', region_name='eu-west-1')
 
 TABLE = "Test_lambda_vero" #os.environ["TableContacts"]
 table = dynamodb.Table(TABLE)
