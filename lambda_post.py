@@ -1,22 +1,15 @@
-from  src.contacts.app import lambda_handler
 import json
+from src.contacts.app import lambda_handler
 
 event = {
     "routeKey": "POST /contacts/lead/create",
-    "headers": {
-        "Content-Type": "application/json"
-    },
     "body": json.dumps({
-        "firstName": "John",
-        "lastName": "Doe",
+        "firstName": "Don",
+        "lastName": "Lucho",
         "phone": "1234567890",
         "nif": "AB123456C",
-        "email": "john.doe@example.com"
+        "email": "Don.Lucho@Test.com"
     })
 }
-# Intenta imprimir la función importada para asegurarte de que es una función
-print(type(lambda_handler))
-
-# Llama a la función lambda_handler con el evento simulado
 response = lambda_handler(event, None)
 print(response)

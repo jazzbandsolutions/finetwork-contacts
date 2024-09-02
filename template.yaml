@@ -10,6 +10,22 @@ Globals:
     Timeout: 3
 
 Resources:
+  # Define the IAM role with AmazonDynamoDBFullAccess policy
+  HttpCrudVeroRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: http-crud-vero-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
   ContactsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -18,9 +34,10 @@ Resources:
       Runtime: python3.12
       Architectures:
         - x86_64
+      Role: !GetAtt HttpCrudVeroRole.Arn
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !ref ContactsDynamoTable  
+            TableName: !Ref ContactsDynamoTable  
       Events:
         GetAllContacts:
           Type: HttpApi
@@ -66,16 +83,41 @@ Resources:
           AttributeType: S
         - AttributeName: sk
           AttributeType: S
+        - AttributeName: nif
+          AttributeType: S
+        - AttributeName: phone
+          AttributeType: S
+        - AttributeName: mail
+          AttributeType: S
       KeySchema:
         - AttributeName: pk
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: NIFIndex
+          KeySchema:
+            - AttributeName: nif
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: PhoneIndex
+          KeySchema:
+            - AttributeName: phone
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: MailIndex
+          KeySchema:
+            - AttributeName: mail
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 Outputs:
   ApiEndpoint:
     Description: "The invoke URL for our HTTP API"
     Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/contacts"
   Function:
     Description: "DynamoDB handler function ARN"
-    Value: !GetAtt DDBHandlerFunction.Arn
+    Value: !GetAtt ContactsFunction.Arn
