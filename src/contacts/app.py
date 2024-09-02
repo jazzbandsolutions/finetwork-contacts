@@ -11,7 +11,7 @@ TABLE = "Test_lambda_vero" #os.environ["TableContacts"]
 table = dynamodb.Table(TABLE)
 
 def lambda_handler(event, context):
-    print(event)
+
     body = {}
     statusCode = 200
     headers = {"Content-Type": "application/json"}
