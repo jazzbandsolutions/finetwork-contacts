@@ -24,7 +24,8 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::211125561005:policy/service-role/AWSLambdaBasicExecutionRole-cf6e6895-1e95-4f00-bbaa-d5b22ae36dea
+        - arn:aws:iam::211125561005:policy/service-role/AWSLambdaMicroserviceExecutionRole-c7cc56ce-1c55-47ab-baa0-103c5bb1a663
 
   ContactsFunction:
     Type: AWS::Serverless::Function

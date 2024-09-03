@@ -2,6 +2,11 @@ import json
 import uuid
 import boto3
 from boto3.dynamodb.conditions import Key
+import logging
+
+# Configura el logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 dynamodb = boto3.resource('dynamodb', region_name='eu-west-1')
 table = dynamodb.Table("Test_lambda_vero")  # Asegúrate de que este nombre sea correcto
@@ -11,7 +16,18 @@ def lambda_handler(event, context):
     body = {}
     statusCode = 200
     headers = {"Content-Type": "application/json"}
-    
+
+    # Obtener el token de autorización del encabezado
+    auth_header = event.get('token', {})
+    token = auth_header.split(' ')[1] if auth_header and ' ' in auth_header else None
+
+    if not token or not verify_token(token):
+        return {
+            'statusCode': 401,
+            'headers': headers,
+            'body': json.dumps({'error': 'Unauthorized'})
+        }
+
     try:
         if event['routeKey'] == "DELETE /contacts/{pk}":
             pk = event['pathParameters']['pk']
@@ -30,10 +46,10 @@ def lambda_handler(event, context):
             body = get_contact_by_phone(value)
         elif event['routeKey'] == "GET /contacts":
             if "queryStringParameters" in event:
-              email =  event["queryStringParameters"]['email']
-              body = get_contact_by_email(email)
+                email = event["queryStringParameters"]['email']
+                body = get_contact_by_email(email)
             else:
-              body = get_contacts() 
+                body = get_contacts()
         elif event['routeKey'] == "PUT /contacts":
             requestJSON = json.loads(event['body'])
             table.put_item(
@@ -41,10 +57,10 @@ def lambda_handler(event, context):
                     'Pk': requestJSON['pk'],
                     'Sk': requestJSON['sk'],
                     'firstName': requestJSON['firstName'],
-                    'lastName': requestJSON["lastName"],
-                    'phone': requestJSON["phone"],
-                    'nif': requestJSON["nif"],
-                    'email': requestJSON["email"]
+                    'lastName': requestJSON['lastName'],
+                    'phone': requestJSON['phone'],
+                    'nif': requestJSON['nif'],
+                    'email': requestJSON['email']
                 })
             body = 'Put item ' + requestJSON['pk']
     except KeyError:
@@ -53,15 +69,19 @@ def lambda_handler(event, context):
     except Exception as e:
         statusCode = 500
         body = str(e)
-    
+
     return {
         "statusCode": statusCode,
         "headers": headers,
         "body": json.dumps(body)
     }
 
+def verify_token(token):
+    valid_tokens = ['token', 'another-valid-token']
+    return token in valid_tokens
+
 def delete_contact(pk):
-    try:    
+    try:
         table.delete_item(
             Key={'Pk': pk, 'Sk': 'Client'}
         )
@@ -90,7 +110,7 @@ def get_contacts():
         response = table.scan()
         items = response.get("Items", [])
         return [{'pk': item['Pk'],
-                 'firstName': item['firstName'], 
+                 'firstName': item['firstName'],
                  'lastName': item['lastName'],
                  'phone': item['phone'],
                  'nif': item['nif'],
@@ -102,7 +122,7 @@ def get_contact_by_PK(pk):
     try:
         response = table.get_item(Key={'Pk': pk, 'Sk': 'Client'})
         item = response.get("Item", {})
-        return [{'firstName': item.get('firstName', ''), 
+        return [{'firstName': item.get('firstName', ''),
                  'lastName': item.get('lastName', ''),
                  'phone': item.get('phone', ''),
                  'nif': item.get('nif', ''),
