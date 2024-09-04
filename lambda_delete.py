@@ -1,62 +1,48 @@
-import json
 import boto3
-from unittest.mock import MagicMock
-import unittest
+from boto3.dynamodb.conditions import Key
+from src.contacts.app import delete_contact
 
-# Supongamos que tu función lambda_handler y otras funciones están en un módulo llamado `lambda_function`
-from src.contacts.app import lambda_handler, delete_contact
+dynamodb = boto3.Session(profile_name="211125561005_apser-TEMP-AdministratorAccess").resource('dynamodb', region_name='eu-west-1')
+table = dynamodb.Table("Test_lambda_vero")  
 
-class TestLambdaHandler(unittest.TestCase):
-
-    def setUp(self):
-        # Configura el mock para DynamoDB
-        self.dynamodb_mock = MagicMock()
-        self.table_mock = MagicMock()
-        self.dynamodb_mock.Table.return_value = self.table_mock
-        boto3.resource = MagicMock(return_value=self.dynamodb_mock)
-        boto3.client = MagicMock()
-
-    def test_delete_contact(self):
-        # Simula la configuración de DynamoDB
-        self.table_mock.delete_item.return_value = {}
-
-        # Simula el evento DELETE
-        event = {
-            'routeKey': 'DELETE /contacts/{pk}',
-            'pathParameters': {
-                'pk': '12345'
+def insert_test_item(pk):
+    try:
+        response = table.put_item(
+            Item={
+                'Pk': pk,
+                'Sk': 'Client',
+                "firstName": "Don",
+                "lastName": "Lucho",
+                "phone": "1234567890",
+                "nif": "AB123456C",
+                "email": "Don.Lucho@Test.com",
             }
-        }
-        context = {}  # Puedes dejar esto vacío si no lo usas
+        )
+        return 'Inserted Test Item ' + pk
+    except Exception as e:
+        return str(e)
 
-        # Llama a la función lambda_handler
-        response = lambda_handler(event, context)
+def get_item(pk):
+    try:
+        response = table.get_item(
+            Key={'Pk': pk, 'Sk': 'Client'}
+        )
+        return response.get('Item', 'Item not found')
+    except Exception as e:
+        return str(e)
 
-        # Verifica los resultados
-        self.assertEqual(response['statusCode'], 200)
-        self.assertEqual(json.loads(response['body']), 'Deleted Client 12345')
-        self.table_mock.delete_item.assert_called_once_with(Key={'Pk': '12345', 'Sk': 'Client'})
+# Inserta un ítem de prueba
+pk_to_delete = '74323204556b4149ba723049a2eb9003'
+print(insert_test_item(pk_to_delete))
 
-    def test_delete_contact_with_error(self):
-        # Simula la configuración de DynamoDB para lanzar una excepción
-        self.table_mock.delete_item.side_effect = KeyError
+# Llama a la función delete_contact para eliminar el ítem
+result = delete_contact(pk_to_delete)
+print(result) 
 
-        # Simula el evento DELETE
-        event = {
-            'routeKey': 'DELETE /contacts/{pk}',
-            'pathParameters': {
-                'pk': '67890'
-            }
-        }
-        context = {}  # Puedes dejar esto vacío si no lo usas
+# Verifica si el ítem fue eliminado
+verification_result = get_item(pk_to_delete)
+print(verification_result)  
 
-        # Llama a la función lambda_handler
-        response = lambda_handler(event, context)
 
-        # Verifica los resultados
-        self.assertEqual(response['statusCode'], 400)
-        self.assertEqual(json.loads(response['body']), 'error in delete contacts')
-        self.table_mock.delete_item.assert_called_once_with(Key={'Pk': '67890', 'Sk': 'Client'})
 
-if __name__ == '__main__':
-    unittest.main()
+

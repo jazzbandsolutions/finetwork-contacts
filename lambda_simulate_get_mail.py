@@ -9,7 +9,9 @@ event = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {test_token}"
     },
-    "body": json.dumps({})  # Para un GET, el cuerpo generalmente puede estar vacío
+    "queryStringParameters": {
+            "email": "Don.Lucho@Test.com"
+    }
 }
 
 # Imprime el tipo de la función importada para asegurarte de que es una función
