@@ -1,7 +1,0 @@
-{
-	"routeKey": "GET /contacts",
-	"headers": {
-		"Content-Type": "application/json"
-	},
-	"body": "{}"
-}

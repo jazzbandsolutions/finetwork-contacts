@@ -1,0 +1,7 @@
+fastapi
+boto3
+pydantic
+pandas
+uvicorn
+pytz
+requests

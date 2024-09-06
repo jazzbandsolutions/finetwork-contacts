@@ -5,11 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Python Debugger: FastAPI",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        }
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}/python",
+            "args": [
+              "app:app",
+              "--reload",             
+              "--port",
+              "8081"
+            ],
+            "jinja": true,
+            "justMyCode": true,
+            "env": {
+              "PORT": "8000",
+              "AWS_LAMBDA_EXEC_WRAPPER": "/opt/bootstrap",
+              "API_KEY": "1234",
+            }
+          }
     ]
 }
